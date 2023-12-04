@@ -24,9 +24,10 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/&lt;start&gt; (use format: YYYY-MM-DD)<br/>"
+        f"/api/v1.0/&lt;start&gt;/&lt;end&gt; (use format: YYYY-MM-DD/YYYY-MM-DD)"
     )
+
 #Parecipitation route
 @app.route("/api/v1.0/precipitation")
 def precipitation():
@@ -85,31 +86,34 @@ def tobs():
 @app.route("/api/v1.0/<start>")
 def start(start):
     session = Session(engine)
-
-    # Query for the min, avg, and max temperatures from the start date
-    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+    results = session.query(func.min(Measurement.tobs), 
+                            func.avg(Measurement.tobs), 
+                            func.max(Measurement.tobs)).\
               filter(Measurement.date >= start).all()
-
     session.close()
 
-    # Create a dictionary for the results
-    temp_data = {'TMIN': results[0][0], 'TAVG': results[0][1], 'TMAX': results[0][2]}
+    # Check if results are empty and return a message if true
+    if not results or not any(results[0]):
+        return jsonify({"error": "No data found for the provided start date."}), 404
 
+    temp_data = {'TMIN': results[0][0], 'TAVG': results[0][1], 'TMAX': results[0][2]}
     return jsonify(temp_data)
+
 
 @app.route("/api/v1.0/<start>/<end>")
 def start_end(start, end):
     session = Session(engine)
-
-    # Query for the min, avg, and max temperatures between the start and end dates
-    results = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-              filter(Measurement.date >= start).filter(Measurement.date <= end).all()
-
+    results = session.query(func.min(Measurement.tobs), 
+                            func.avg(Measurement.tobs), 
+                            func.max(Measurement.tobs)).\
+              filter(Measurement.date >= start, Measurement.date <= end).all()
     session.close()
 
-    # Create a dictionary for the results
-    temp_data = {'TMIN': results[0][0], 'TAVG': results[0][1], 'TMAX': results[0][2]}
+    # Check if results are empty and return a message if true
+    if not results or not any(results[0]):
+        return jsonify({"error": "No data found for the provided date range."}), 404
 
+    temp_data = {'TMIN': results[0][0], 'TAVG': results[0][1], 'TMAX': results[0][2]}
     return jsonify(temp_data)
 
 # Flask App Run
