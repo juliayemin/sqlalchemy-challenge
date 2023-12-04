@@ -6,7 +6,7 @@ import numpy as np
 import datetime as dt
 
 # Database setup
-engine = create_engine("sqlite:///hawaii.sqlite")
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 Base = automap_base()
 Base.prepare(engine, reflect=True)
 Measurement = Base.classes.measurement
